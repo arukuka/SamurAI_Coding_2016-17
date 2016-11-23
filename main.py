@@ -5,6 +5,8 @@ import sys
 import os
 import pickle
 
+from chainer import serializers
+
 from dqn import DQN
 
 weaponSections = [ 4, 5, 7 ]
@@ -77,9 +79,11 @@ def simulate(field, action_str):
     
     return merit, False
 
-turn_path = os.path.dirname(__file__) + './turn/'
+turn_path = os.path.join(os.path.dirname(__file__), 'turn/')
 
-dat_path = os.path.dirname(__file__) + './dat/'
+temp_path = os.path.join(os.path.dirname(__file__), 'temp/')
+
+dat_path = os.path.join(os.path.dirname(__file__), 'dat/')
 
 teban = input()
 
@@ -95,6 +99,17 @@ model = DQN()
 if os.path.isfile(dat_path + "dqn.model"):
     print >> sys.stderr, "::loading dqn.model..."
     serializers.load_hdf5(dat_path + "dqn.model", model)
+
+temp = 0.0
+if os.path.isfile(temp_path + "temp.pickle"):
+    with open(temp_path + "temp.pickle", "rb") as f:
+        temp = pickle.load(f)
+
+with open(temp_path + 'temp.pickle', mode='wb') as f:
+    pickle.dump(temp + 0.5 if temp < 27000 else 0.0, f)
+
+def get_prob():
+    return np.exp(-(temp*1.5174271293851464/27000)**2)
 
 print "0"
 sys.stdout.flush()
@@ -129,7 +144,7 @@ while True:
     kumi = [prev_state, action, reward, state]
     with open(turn_path + str(turn) + '.pickle', mode='wb') as f:
         pickle.dump(kumi, f)
-    action, action_str = model.next_action(state, 0.5)
+    action, action_str = model.next_action(state, get_prob())
     merit, invalid_flag = simulate(s0.copy(), action_str)
     reward = 0
     if invalid_flag:

@@ -9,7 +9,7 @@ import sys
 import os
 import pickle
 
-turn_path = os.path.dirname(__file__) + './turn/'
+turn_path = os.path.join(os.path.dirname(__file__), 'turn/')
 
 files = os.listdir(turn_path)
 rules = []
@@ -19,7 +19,7 @@ for fn in files:
         rules.append(r)
     # os.remove(turn_path + fn)   
 
-dat_path = os.path.dirname(__file__) + './dat/'
+dat_path = os.path.join(os.path.dirname(__file__), 'dat/')
 
 model = DQN()
 if os.path.isfile(dat_path + "dqn.model"):
