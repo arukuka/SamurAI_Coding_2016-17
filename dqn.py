@@ -51,9 +51,13 @@ class DQN(chainer.Chain):
         Q = self(s).data
         
         if np.random.rand() < epsilon:
+            method = "RANDOM"
             index = np.random.randint(0, self.actions.get_action_size())
         else:
+            method = "GREEDY"
             index = np.argmax(Q)
+        
+        print >> sys.stderr, "epsilon: {}, method: {}, index: {}, Q value: {}".format(epsilon, method, index, Q[0][index])
         
         return index, self.actions.get_action_str(index)
 
