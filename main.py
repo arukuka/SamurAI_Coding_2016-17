@@ -59,6 +59,8 @@ def simulate(field, action_str):
                     merit += 25
                 elif 3 <= field[ny][nx] and field[ny][nx] <= 5:
                     merit += 20
+                elif 0 <= field[ny][nx] and field[ny][nx] <= 2:
+                    merit -= 5
                 field[ny][nx] = samuraiID
         if 5 <= a and a <= 8:
             # move
