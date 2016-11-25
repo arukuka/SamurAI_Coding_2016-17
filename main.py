@@ -105,8 +105,14 @@ if os.path.isfile(temp_path + "temp.pickle"):
     with open(temp_path + "temp.pickle", "rb") as f:
         temp = pickle.load(f)
 
+if not os.path.isdir(temp_path):
+    os.mkdir(temp_path)
+
+if not os.path.isdir(turn_path):
+    os.mkdir(turn_path)
+
 with open(temp_path + 'temp.pickle', mode='wb') as f:
-    pickle.dump(temp + 0.5 if temp < 27000 else 0.0, f)
+    pickle.dump(temp + 0.5, f)
 
 def get_prob():
     return np.exp(-(temp*1.5174271293851464/27000)**2)
@@ -115,7 +121,7 @@ print "0"
 sys.stdout.flush()
 
 while True:
-    turn = input()
+    turn = int(input())
     for i in xrange(3):
         a = map(int, raw_input().split())
         for j in xrange(5):
