@@ -24,3 +24,15 @@ class ActionList:
     def get_action_str(self, index):
         return self.action_list[index]
 
+    def get_action_idx(self, action_str):
+        return self.action_list.index(action_str)
+    
+    def to_valid_actions(self, arr):
+        power = 7
+        dst = []
+        for a in arr:
+            if self.action_cost[a] <= power:
+                dst.append(a)
+                power -= self.action_cost[a]
+        return dst
+
