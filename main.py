@@ -158,9 +158,10 @@ while True:
     if invalid_flag:
         reward -= 10000
     reward += merit
-    s3 = s2
-    s2 = s1
-    s1 = s0
+    prev_state =  [s0.copy(), s1.copy(), s2.copy(), s3.copy()]
+    s3 = s2.copy()
+    s2 = s1.copy()
+    s1 = s0.copy()
     print action_str
     sys.stdout.flush()
 
