@@ -95,7 +95,7 @@ s2 = np.zeros((17, 15), dtype=np.int32)
 s3 = np.zeros((17, 15), dtype=np.int32)
 reward = 0
 action = 0
-prev_state = [s0, s1, s2, s3]
+prev_state = [s0.copy(), s1, s2, s3]
 
 model = DQN()
 if os.path.isfile(dat_path + "dqn.model"):
