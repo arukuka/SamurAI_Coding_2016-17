@@ -139,7 +139,6 @@ while True:
         reward += 1000
     state = [s0, s1, s2, s3]
     kumi = [prev_state, action, reward, state]
-    assert (not(np.array(prev_state) == np.array(state)).all())
     with open(turn_path + str(turn) + '.pickle', mode='wb') as f:
         pickle.dump(kumi, f)
     action_str = " ".join(([str(acts['plays'][idx]['samurai'])] + map(str, actions.to_valid_actions(acts['plays'][idx]['actions']))) + ["0"])
