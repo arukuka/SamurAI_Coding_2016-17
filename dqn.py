@@ -80,7 +80,7 @@ class DQN(chainer.Chain):
         target = np.asanyarray(Q.copy(), dtype=np.float32)
         
         for i in xrange(len(rules)):
-            target[i][actions[i]] += rewards[i] + self.gamma * max_next_Q[i]
+            target[i][actions[i]] = rewards[i] + self.gamma * max_next_Q[i]
         
         return F.mean_squared_error(Variable(target), Variable(Q))
 
