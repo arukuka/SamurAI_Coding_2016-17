@@ -126,11 +126,11 @@ while True:
         for j in xrange(15):
             s0[i][j] = a[j]
     if s0[15][4] > 0:
-        reward -= 2000
+        reward -= 1000
     if s0[15][9] > 0:
-        reward -= 2000
+        reward -= 1000
     if s0[15][14] > 0:
-        reward -= 2000
+        reward -= 1000
     if s0[16][4] > 0:
         reward += 1000
     if s0[16][9] > 0:
