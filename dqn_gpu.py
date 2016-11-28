@@ -76,6 +76,6 @@ class DQN(chainer.Chain):
         target = Q.copy()
         
         for i in xrange(len(rules)):
-            target[i][actions[i]] += self.alpha * (rewards[i] + self.gamma * max_next_Q[i] - target[i][actions[i]])
+            target[i][actions[i]] = rewards[i] + self.gamma * max_next_Q[i]
         return F.mean_squared_error(Variable(target), Variable(Q))
 
