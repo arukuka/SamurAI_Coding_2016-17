@@ -139,8 +139,6 @@ while True:
         reward += 1000
     state = [s0, s1, s2, s3]
     kumi = [prev_state, action, reward, state]
-    print >> sys.stderr, s0
-    print >> sys.stderr, "reward : {}".format(reward)
     assert (not(np.array(prev_state) == np.array(state)).all())
     with open(turn_path + str(turn) + '.pickle', mode='wb') as f:
         pickle.dump(kumi, f)
