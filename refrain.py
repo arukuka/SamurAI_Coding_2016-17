@@ -72,7 +72,6 @@ def simulate(field, action_str):
                 return merit, True
             if hide and field[ny][nx] in {3, 4, 5, 8}:
                 return merit, True
-            print >> sys.stderr, "move from {} to {}".format([x, y], [nx, ny])
             x, y = nx, ny
         if a == 9:
             # hide / show
@@ -87,7 +86,10 @@ turn_path = os.path.join(os.path.dirname(__file__), 'turn/')
 
 json_path = os.path.join(os.path.dirname(__file__), 'json/')
 
-target = reduce(max, map(lambda fn:int(fn.split(".")[0]), os.listdir(json_path)))
+with open(json_path + "target.txt") as f:
+    target = int(f.read())
+
+print >> sys.stderr, target
 
 with open(json_path + str(target) + ".json") as f:
     s = f.read()
