@@ -62,12 +62,14 @@ class DQN(chainer.Chain):
         actions = np.ndarray(shape=len(rules), dtype=np.uint32)
         rewards = np.ndarray(shape=len(rules), dtype=np.float32)
         next_states = np.ndarray(shape=(len(rules), 4, 17, 15), dtype=np.float32)
+        end_flags = np.ndarray(shape=len(rules), dtype=np.bool)
         
         for i in xrange(len(rules)):
             states[i] = np.asarray(rules[i][0], dtype=np.float32)
             actions[i] = rules[i][1]
             rewards[i] = rules[i][2]
             next_states[i] = np.asarray(rules[i][3], dtype=np.float32)
+            end_flags[i] = rules[i][4]
         
         Q = self(Variable(cuda.to_gpu(states))).data
         next_Q = self(Variable(cuda.to_gpu(next_states))).data
@@ -76,6 +78,9 @@ class DQN(chainer.Chain):
         target = Q.copy()
         
         for i in xrange(len(rules)):
-            target[i][actions[i]] = rewards[i] + self.gamma * max_next_Q[i]
+            if end_flags[i]:
+                target[i][actions[i]] = rewards[i]
+            else:
+                target[i][actions[i]] = rewards[i] + self.gamma * max_next_Q[i]
         return F.mean_squared_error(Variable(target), Variable(Q))
 

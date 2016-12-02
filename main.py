@@ -59,8 +59,6 @@ def simulate(field, action_str):
                     merit += 25
                 elif 3 <= field[ny][nx] and field[ny][nx] <= 5:
                     merit += 20
-                elif 0 <= field[ny][nx] and field[ny][nx] <= 2:
-                    merit -= 5
                 field[ny][nx] = samuraiID
         if 5 <= a and a <= 8:
             # move
@@ -87,7 +85,9 @@ temp_path = os.path.join(os.path.dirname(__file__), 'temp/')
 
 dat_path = os.path.join(os.path.dirname(__file__), 'dat/')
 
-teban = input()
+last_path = os.path.join(os.path.dirname(__file__), 'last/')
+
+side = int(input())
 
 s0 = np.zeros((17, 15), dtype=np.int32)
 s1 = np.zeros((17, 15), dtype=np.int32)
@@ -113,6 +113,9 @@ if not os.path.isdir(temp_path):
 if not os.path.isdir(turn_path):
     os.mkdir(turn_path)
 
+if not os.path.isdir(last_path):
+    os.mkdir(last_path)
+
 with open(temp_path + 'temp.pickle', mode='wb') as f:
     pickle.dump(temp + 0.5, f)
 
@@ -136,12 +139,6 @@ while True:
         a = map(int, raw_input().split())
         for j in xrange(15):
             s0[i][j] = a[j]
-    if s0[15][4] > 0:
-        reward -= 1000
-    if s0[15][9] > 0:
-        reward -= 1000
-    if s0[15][14] > 0:
-        reward -= 1000
     if s0[16][4] > 0:
         reward += 1000
     if s0[16][9] > 0:
@@ -149,19 +146,19 @@ while True:
     if s0[16][14] > 0:
         reward += 1000
     state = [s0, s1, s2, s3]
-    kumi = [prev_state, action, reward, state]
+    kumi = [prev_state, action, reward, state, False]
     with open(turn_path + str(turn) + '.pickle', mode='wb') as f:
         pickle.dump(kumi, f)
     action, action_str = model.next_action(state, get_prob())
     merit, invalid_flag = simulate(s0.copy(), action_str)
-    reward = 0
-    if invalid_flag:
-        reward -= 10000
-    reward += merit
+    reward = merit
     prev_state =  [s0.copy(), s1.copy(), s2.copy(), s3.copy()]
     s3 = s2.copy()
     s2 = s1.copy()
     s1 = s0.copy()
+    if turn + 2 >= 96:
+        with open(last_path + str(side) + '.pickle', mode='wb') as f:
+            pickle.dump([prev_state, action], f)
     print action_str
     sys.stdout.flush()
 

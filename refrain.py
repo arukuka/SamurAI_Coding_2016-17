@@ -86,6 +86,8 @@ turn_path = os.path.join(os.path.dirname(__file__), 'turn/')
 
 json_path = os.path.join(os.path.dirname(__file__), 'json/')
 
+last_path = os.path.join(os.path.dirname(__file__), 'last/')
+
 with open(json_path + "target.txt") as f:
     target = int(f.read())
 
@@ -97,6 +99,9 @@ with open(json_path + str(target) + ".json") as f:
 
 if not os.path.isdir(turn_path):
     os.mkdir(turn_path)
+
+if not os.path.isdir(last_path):
+    os.mkdir(last_path)
 
 side = int(input())
 
@@ -134,7 +139,7 @@ while True:
     if s0[16][14] > 0:
         reward += 1000
     state = [s0, s1, s2, s3]
-    kumi = [prev_state, action, reward, state]
+    kumi = [prev_state, action, reward, state, False]
     print >> sys.stderr, "reward: {}".format(reward)
     with open(turn_path + str(turn) + '.pickle', mode='wb') as f:
         pickle.dump(kumi, f)
@@ -146,6 +151,9 @@ while True:
     s3 = s2.copy()
     s2 = s1.copy()
     s1 = s0.copy()
+    if idx + 2 >= 96:
+        with open(last_path + str(side) + '.pickle', mode='wb') as f:
+            pickle.dump([prev_state, action], f)
     print acts['plays'][idx]['samurai']
     print " ".join(map(str, acts['plays'][idx]['actions']))
     print 0
