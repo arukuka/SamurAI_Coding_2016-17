@@ -41,6 +41,8 @@ def simulate(field, action_str):
     rest = field[15][samuraiID * 5 + 4]
     
     if done or rest > 0:
+        if action_str.split(' ')[1] == 0:
+            return 0, False
         return 0, True
     
     for a in map(int, action_str.split(' ')[1:-1]):
@@ -60,8 +62,6 @@ def simulate(field, action_str):
                     merit += 25
                 elif 3 <= field[ny][nx] and field[ny][nx] <= 5:
                     merit += 20
-                elif 0 <= field[ny][nx] and field[ny][nx] <= 2:
-                    merit -= 5
                 field[ny][nx] = samuraiID
         if 5 <= a and a <= 8:
             # move
@@ -127,12 +127,6 @@ while True:
         a = map(int, raw_input().split())
         for j in xrange(15):
             s0[i][j] = a[j]
-    if s0[15][4] > 0:
-        reward -= 1000
-    if s0[15][9] > 0:
-        reward -= 1000
-    if s0[15][14] > 0:
-        reward -= 1000
     if s0[16][4] > 0:
         reward += 1000
     if s0[16][9] > 0:
@@ -141,15 +135,13 @@ while True:
         reward += 1000
     state = [s0, s1, s2, s3]
     kumi = [prev_state, action, reward, state]
+    print >> sys.stderr, "reward: {}".format(reward)
     with open(turn_path + str(turn) + '.pickle', mode='wb') as f:
         pickle.dump(kumi, f)
     action_str = " ".join(([str(acts['plays'][idx]['samurai'])] + map(str, actions.to_valid_actions(acts['plays'][idx]['actions']))) + ["0"])
     action = actions.get_action_idx(action_str)
     merit, invalid_flag = simulate(s0.copy(), action_str)
-    reward = 0
-    if invalid_flag:
-        reward -= 10000
-    reward += merit
+    reward = merit
     prev_state = [s0.copy(), s1.copy(), s2.copy(), s3.copy()]
     s3 = s2.copy()
     s2 = s1.copy()
