@@ -33,7 +33,7 @@ if os.path.isfile(dat_path + "dqn.model"):
 
 if os.path.isfile(dat_path + "dqn.state"):
     print >> sys.stderr, "::loading dqn.state...."
-    serializers.load_hd5f(dat_path + "dqn.state", optim)
+    serializers.load_hdf5(dat_path + "dqn.state", optim)
 
 for epoch in xrange(100):
     print "Epoch: {}".format(epoch)
