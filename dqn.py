@@ -8,42 +8,37 @@ import numpy as np
 from gen_action_list import ActionList
 import sys
 
-class DQN(chainer.Chain):
+class DQN():
 
     alpha = 0.01
     gamma = 0.99
 
     def __init__(self):
-        super(DQN, self).__init__()
-        
         self.actions = ActionList()
         
-        links = [('conv1_1', L.Convolution2D(4, 64, 3, stride=1, pad=1))]
-        links += [('conv1_2', L.Convolution2D(64, 64, 3, stride=1, pad=1))]
-        links += [('_mpool1', F.MaxPooling2D(2, 2, 0, True, True))]
-        links += [('conv2_1', L.Convolution2D(64, 128, 3, stride=1, pad=1))]
-        links += [('conv2_2', L.Convolution2D(128, 128, 3, stride=1, pad=1))]
-        links += [('_mpool2', F.MaxPooling2D(2, 2, 0, True, True))]
-        links += [('conv3_1', L.Convolution2D(128, 256, 3, stride=1, pad=1))]
-        links += [('conv3_2', L.Convolution2D(256, 256, 3, stride=1, pad=1))]
-        links += [('_mpool3', F.MaxPooling2D(2, 2, 0, True, True))]
-        links += [('fc4', L.Linear(1536, 4096))]
-        links += [('_dropout4', F.Dropout(0.5))]
-        links += [('fc5', L.Linear(4096, 4096))]
-        links += [('_dropout5', F.Dropout(0.5))]
-        links += [('fc6', L.Linear(4096, self.actions.get_action_size()))]
-
-        for link in links:
-            if not link[0].startswith('_'):
-                self.add_link(*link)
-
-        self.forward = links
-
+        self.model = FunctionSet(
+            conv1_1=L.Convolution2D(4, 8, 3, stride=1, pad=1),
+            conv1_2=L.Convolution2D(8, 8, 3, stride=1, pad=1),
+            conv2_1=L.Convolution2D(8, 16, 3, stride=1, pad=1),
+            conv2_2=L.Convolution2D(16, 16, 3, stride=1, pad=1),
+            fc3=L.Linear(4080, 4096),
+            fc4=L.Linear(4096, 4096),
+            fc5=L.Linear(4096, self.actions.get_action_size())
+        )
+        
     def __call__(self, x):
-        for name, f in self.forward:
-            x = f(x)
+        y1 = self.model.conv1_1(x)
+        y2 = self.model.conv1_2(y1)
+        y3 = F.relu(y2)
+        y4 = self.model.conv2_1(y3)
+        y5 = self.model.conv2_2(y4)
+        y6 = F.relu(y5)
+        y7 = self.model.fc3(y6)
+        y8 = self.model.fc4(y7)
+        y9 = F.relu(y8)
+        y10 = self.model.fc5(y9)
 
-        return x
+        return y10
 
     def next_action(self, state_, epsilon):
         state = np.asanyarray(np.array(state_).reshape(1, 4, 17, 15), dtype=np.float32)
@@ -63,8 +58,8 @@ class DQN(chainer.Chain):
 
     def get_loss(self, rules):
         states = np.ndarray(shape=(len(rules), 4, 17, 15), dtype=np.float32)
-        actions = np.ndarray(shape=(len(rules), 1), dtype=np.uint32)
-        rewards = np.ndarray(shape=(len(rules), 1), dtype=np.float32)
+        actions = np.ndarray(shape=len(rules), dtype=np.uint32)
+        rewards = np.ndarray(shape=len(rules), dtype=np.float32)
         next_states = np.ndarray(shape=(len(rules), 4, 17, 15), dtype=np.float32)
         end_flags = np.ndarray(shape=len(rules), dtype=np.bool)
         
@@ -75,17 +70,16 @@ class DQN(chainer.Chain):
             next_states[i] = np.asarray(rules[i][3], dtype=np.float32)
             end_flags[i] = rules[i][4]
         
-        Q = self(Variable(states)).data
-        next_Q = self(Variable(next_states)).data
-        tmp = list(map(np.max, next_Q))
+        Q = self(Variable(states))
+        next_Q = self(Variable(next_states))
+        tmp = list(map(np.max, next_Q.data.get()))
         max_next_Q = np.asanyarray(tmp, dtype=np.float32)
-        target = np.asanyarray(Q.copy(), dtype=np.float32)
+        target = np.asanyarray(Q.data.get(), dtype=np.float32)
         
         for i in xrange(len(rules)):
             if end_flags[i]:
                 target[i][actions[i]] = rewards[i]
             else:
                 target[i][actions[i]] = rewards[i] + self.gamma * max_next_Q[i]
-        
-        return F.mean_squared_error(Variable(target), Variable(Q))
+        return F.mean_squared_error(Variable(target), Q)
 
