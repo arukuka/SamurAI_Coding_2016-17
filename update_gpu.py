@@ -8,6 +8,7 @@ import os.path
 import sys
 import os
 import pickle
+import math
 
 turn_path = os.path.join(os.path.dirname(__file__), 'turn/')
 
@@ -22,17 +23,17 @@ for fn in files:
 dat_path = os.path.join(os.path.dirname(__file__), 'dat/')
 
 cuda.get_device(0).use()
-model = DQN().to_gpu(0)
+dqn = DQN()
 
 optim = optimizers.Adam()
-optim.setup(model)
+optim.setup(dqn.model)
 
 if os.path.isfile(dat_path + "dqn.model"):
     print >> sys.stderr, "::loading dqn.model..."
-    serializers.load_hdf5(dat_path + "dqn.model", model)
+    serializers.load_hdf5(dat_path + "dqn.model", dqn.model)
 
 if os.path.isfile(dat_path + "dqn.state"):
-    print >> sys.stderr, "::loading dqn.state...."
+    print >> sys.stderr, "::loading dqn.state..."
     serializers.load_hdf5(dat_path + "dqn.state", optim)
 
 for epoch in xrange(100):
@@ -42,13 +43,14 @@ for epoch in xrange(100):
     for batch in xrange(20):
         trg_rules.append(rules[trg_index[batch]])
     optim.zero_grads()
-    loss = model.get_loss(trg_rules)
+    loss = dqn.get_loss(trg_rules)
     loss.backward()
     optim.update()
+    print "\tloss : {}".format(math.log10(float(loss.data)))
 
 if not os.path.isdir(dat_path):
     os.mkdir(dat_path)
 
-serializers.save_hdf5(dat_path + "dqn.model", model)
+serializers.save_hdf5(dat_path + "dqn.model", dqn.model)
 serializers.save_hdf5(dat_path + "dqn.state", optim)
 
