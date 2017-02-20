@@ -36,19 +36,19 @@ class DQN():
 
         return ys[0], ys[1], ys[2]
 
-    def next_action(self, state_, epsilon):
+    def next_action(self, state_):
         state = np.asanyarray(np.array(state_).reshape(1, 4, 17, 15), dtype=np.float32)
         s = Variable(state)
-        Q0, Q1, Q2 = self(s).data
+        Q0, Q1, Q2 = self(s)
         P0 = F.softmax(Q0)
         P1 = F.softmax(Q1)
         P2 = F.softmax(Q2)
         
-        index0 = np.argmax(P0)
-        index1 = np.argmax(P1)
-        index2 = np.argmax(P2)
+        index0 = np.argmax(P0.data[0])
+        index1 = np.argmax(P1.data[0])
+        index2 = np.argmax(P2.data[0])
         
-        return index0, P0[index], index1, P1[index2], index2, P2[index2]
+        return index0, P0.data[0][index0], index1, P1.data[0][index1], index2, P2.data[0][index2]
 
     def get_loss(self, rules):
         states = np.ndarray(shape=(len(rules), 4, 17, 15), dtype=np.float32)
@@ -62,7 +62,7 @@ class DQN():
             positions1[i] = rules[i][2]
             positions2[i] = rules[i][3]
         
-        Q0, Q1, Q2 = self(Variable(states)))
+        Q0, Q1, Q2 = self(Variable(states))
         arr = np.asanyarray(F.softmax(Q0).data.get()[0].copy(), dtype=np.float32)
         arr.sort()
         pos = np.argmax(Q0.data.get()[0])
