@@ -5,6 +5,7 @@ import sys
 import os
 import pickle
 import json
+import copy
 
 from gen_action_list import ActionList
 
@@ -109,11 +110,22 @@ s0 = np.zeros((17, 15), dtype=np.int32)
 s1 = np.zeros((17, 15), dtype=np.int32)
 s2 = np.zeros((17, 15), dtype=np.int32)
 s3 = np.zeros((17, 15), dtype=np.int32)
-reward = 0
-action = 0
-prev_state = [s0.copy(), s1, s2, s3]
 
 idx = side
+
+HOME = [
+    [0, 0],
+    [0, 7],
+    [7, 0],
+    [14, 14],
+    [14, 7],
+    [7, 14]
+]
+
+enemies = []
+for i in xrange(3):
+    e = copy.copy(HOME[(1 - side) * 3 + i])
+    enemies.append(e)
 
 print 0
 sys.stdout.flush()
@@ -133,27 +145,40 @@ while True:
         for j in xrange(15):
             s0[i][j] = a[j]
     if s0[16][4] > 0:
-        reward += 1000
+        enemies[0] = copy.copy(HOME[(1 - side) * 3 + 0])
     if s0[16][9] > 0:
-        reward += 1000
+        enemies[1] = copy.copy(HOME[(1 - side) * 3 + 1])
     if s0[16][14] > 0:
-        reward += 1000
+        enemies[2] = copy.copy(HOME[(1 - side) * 3 + 2])
     state = [s0, s1, s2, s3]
-    kumi = [prev_state, action, reward, state, False]
-    print >> sys.stderr, "reward: {}".format(reward)
+    if idx - 1 >= 0:
+        jdx = idx - 1
+        e = int(acts['plays'][jdx]['samurai'])
+        x = enemies[e][0]
+        y = enemies[e][1]
+        for act in map(int, acts['plays'][jdx]['actions']):
+            if 5 <= act and act <= 8:
+                # move
+                dx, dy = rotate(0, 1, act - 5)
+                x = x + dx
+                y = y + dy
+        enemies[e][0] = x
+        enemies[e][1] = y
+            
+    kumi = [
+        state,
+        enemies[0][0] + enemies[0][1] * 15,
+        enemies[1][0] + enemies[1][1] * 15,
+        enemies[2][0] + enemies[2][1] * 15
+    ]
+    print >> sys.stderr, "enemies: {}".format(enemies)
     with open(turn_path + str(turn) + '.pickle', mode='wb') as f:
         pickle.dump(kumi, f)
     action_str = " ".join(([str(acts['plays'][idx]['samurai'])] + map(str, actions.to_valid_actions(acts['plays'][idx]['actions']))) + ["0"])
     action = actions.get_action_idx(action_str)
-    merit, invalid_flag = simulate(s0.copy(), action_str)
-    reward = merit
-    prev_state = [s0.copy(), s1.copy(), s2.copy(), s3.copy()]
     s3 = s2.copy()
     s2 = s1.copy()
     s1 = s0.copy()
-    if idx + 2 >= 96:
-        with open(last_path + str(side) + '.pickle', mode='wb') as f:
-            pickle.dump([prev_state, action], f)
     print acts['plays'][idx]['samurai']
     print " ".join(map(str, acts['plays'][idx]['actions']))
     print 0
