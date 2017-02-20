@@ -97,10 +97,10 @@ reward = 0
 action = 0
 prev_state = [s0.copy(), s1, s2, s3]
 
-model = DQN()
+dqn = DQN()
 if os.path.isfile(dat_path + "dqn.model"):
     print >> sys.stderr, "::loading dqn.model..."
-    serializers.load_hdf5(dat_path + "dqn.model", model)
+    serializers.load_hdf5(dat_path + "dqn.model", dqn.model)
 
 temp = 0.0
 if os.path.isfile(temp_path + "temp.pickle"):
@@ -149,7 +149,7 @@ while True:
     kumi = [prev_state, action, reward, state, False]
     with open(turn_path + str(turn) + '.pickle', mode='wb') as f:
         pickle.dump(kumi, f)
-    action, action_str = model.next_action(state, get_prob())
+    action, action_str = dqn.next_action(state, 0)
     merit, invalid_flag = simulate(s0.copy(), action_str)
     reward = merit
     prev_state =  [s0.copy(), s1.copy(), s2.copy(), s3.copy()]
