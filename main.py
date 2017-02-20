@@ -25,6 +25,7 @@ for i in xrange(3):
 
 side = input()
 print 0
+sys.stdout.flush()
 
 def write(p, P):
     if P > 0.8:
