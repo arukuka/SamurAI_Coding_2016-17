@@ -24,6 +24,7 @@ for i in xrange(3):
         serializers.load_hdf5(dat_path + "dqn" + str(i) + ".model", dqn.models[i])
 
 side = input()
+print 0
 
 def write(p, P):
     if P > 0.8:
