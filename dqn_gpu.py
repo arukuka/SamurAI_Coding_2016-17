@@ -10,71 +10,75 @@ import sys
 
 class DQN():
 
-    gamma = 0.99
-
     def __init__(self):
-        self.actions = ActionList()
-        
-        self.model = FunctionSet(
-            conv1_1=L.Convolution2D(4, 8, 3, stride=1, pad=1),
-            conv1_2=L.Convolution2D(8, 8, 3, stride=1, pad=1),
-            conv2_1=L.Convolution2D(8, 16, 3, stride=1, pad=1),
-            conv2_2=L.Convolution2D(16, 16, 3, stride=1, pad=1),
-            fc3=L.Linear(4080, 4096),
-            fc4=L.Linear(4096, 4096),
-            fc5=L.Linear(4096, self.actions.get_action_size())
-        ).to_gpu()
+        self.models = []
+        for i in xrange(3):
+          model = FunctionSet(
+              conv1=L.Convolution2D(4, 8, 3, stride=1, pad=1),
+              conv2=L.Convolution2D(8, 8, 3, stride=1, pad=1),
+              fc3=L.Linear(2040, 512),
+              fc4=L.Linear(512, 512),
+              fc5=L.Linear(512, 15 * 15)
+          )
+          self.models.append(model)
         
     def __call__(self, x):
-        y1 = self.model.conv1_1(x)
-        y2 = self.model.conv1_2(y1)
-        y3 = F.relu(y2)
-        y4 = self.model.conv2_1(y3)
-        y5 = self.model.conv2_2(y4)
-        y6 = F.relu(y5)
-        y7 = self.model.fc3(y6)
-        y8 = self.model.fc4(y7)
-        y9 = F.relu(y8)
-        y10 = self.model.fc5(y9)
+        ys = []
+        for i in xrange(3):
+            y = self.models[i].conv1(x)
+            y = self.models[i].conv2(y)
+            y = F.relu(y)
+            y = self.models[i].fc3(y)
+            y = self.models[i].fc4(y)
+            y = F.relu(y)
+            y = self.models[i].fc5(y)
+            ys.append(y)
 
-        return y10
+        return ys[0], ys[1], ys[2]
 
-    def next_action(self, state_, epsilon):
+    def next_action(self, state_):
         state = np.asanyarray(np.array(state_).reshape(1, 4, 17, 15), dtype=np.float32)
         s = Variable(cuda.to_gpu(state))
-        Q = self(s).data
+        Q0, Q1, Q2 = self(s).data
+        P0 = F.softmax(Q0)
+        P1 = F.softmax(Q1)
+        P2 = F.softmax(Q2)
         
-        if np.random.rand() < epsilon:
-            index = np.random.randint(0, self.actions.get_action_size())
-        else:
-            index = np.argmax(Q)
+        index0 = np.argmax(P0)
+        index1 = np.argmax(P1)
+        index2 = np.argmax(P2)
         
-        return index, self.actions.get_action_str(index)
+        return index0, P0[index], index1, P1[index2], index2, P2[index2]
 
     def get_loss(self, rules):
         states = np.ndarray(shape=(len(rules), 4, 17, 15), dtype=np.float32)
-        actions = np.ndarray(shape=len(rules), dtype=np.uint32)
-        rewards = np.ndarray(shape=len(rules), dtype=np.float32)
-        next_states = np.ndarray(shape=(len(rules), 4, 17, 15), dtype=np.float32)
-        end_flags = np.ndarray(shape=len(rules), dtype=np.bool)
+        positions0 = np.ndarray(shape=len(rules), dtype=np.uint32)
+        positions1 = np.ndarray(shape=len(rules), dtype=np.uint32)
+        positions2 = np.ndarray(shape=len(rules), dtype=np.uint32)
         
         for i in xrange(len(rules)):
             states[i] = np.asarray(rules[i][0], dtype=np.float32)
-            actions[i] = rules[i][1]
-            rewards[i] = rules[i][2]
-            next_states[i] = np.asarray(rules[i][3], dtype=np.float32)
-            end_flags[i] = rules[i][4]
+            positions0[i] = rules[i][1]
+            positions1[i] = rules[i][2]
+            positions2[i] = rules[i][3]
         
-        Q = self(Variable(cuda.to_gpu(states)))
-        next_Q = self(Variable(cuda.to_gpu(next_states)))
-        tmp = list(map(np.max, next_Q.data.get()))
-        max_next_Q = np.asanyarray(tmp, dtype=np.float32)
-        target = np.asanyarray(Q.data.get(), dtype=np.float32)
+        Q0, Q1, Q2 = self(Variable(cuda.to_gpu(states)))
+        arr = np.asanyarray(F.softmax(Q0).data.get()[0].copy(), dtype=np.float32)
+        arr.sort()
+        pos = np.argmax(cuda.to_cpu(Q0.data.get()[0]))
+        print >> sys.stderr, "{}, {} ({}) ... <=> {}, {}".format(pos % 15, pos / 15, arr[::-1][0:5], positions0[0] % 15, positions0[0] / 15)
+        target0 = np.zeros(shape=(len(rules)), dtype=np.int32)
+        target1 = np.zeros(shape=(len(rules)), dtype=np.int32)
+        target2 = np.zeros(shape=(len(rules)), dtype=np.int32)
         
         for i in xrange(len(rules)):
-            if end_flags[i]:
-                target[i][actions[i]] = rewards[i]
-            else:
-                target[i][actions[i]] = rewards[i] + self.gamma * max_next_Q[i]
-        return F.mean_squared_error(Variable(cuda.to_gpu(target)), Q)
+            target0[i] = positions0[i]
+            target1[i] = positions1[i]
+            target2[i] = positions2[i]
+            
+        
+        print >> sys.stderr, "\tacc0 : {}".format(float(cuda.to_cpu(F.accuracy(Q0, Variable(cuda.to_gpu(target0))).data)))
+        print >> sys.stderr, "\tacc1 : {}".format(float(cuda.to_cpu(F.accuracy(Q1, Variable(cuda.to_gpu(target1))).data)))
+        print >> sys.stderr, "\tacc2 : {}".format(float(cuda.to_cpu(F.accuracy(Q2, Variable(cuda.to_gpu(target2))).data)))
+        return F.softmax_cross_entropy(Q0, Variable(cuda.to_gpu(target0))), F.softmax_cross_entropy(Q1, Variable(cuda.to_gpu(target1))), F.softmax_cross_entropy(Q2, Variable(cuda.to_gpu(target2)))
 

@@ -25,16 +25,22 @@ dat_path = os.path.join(os.path.dirname(__file__), 'dat/')
 cuda.get_device(0).use()
 dqn = DQN()
 
-optim = optimizers.Adam()
-optim.setup(dqn.model)
+optims = []
 
-if os.path.isfile(dat_path + "dqn.model"):
-    print >> sys.stderr, "::loading dqn.model..."
-    serializers.load_hdf5(dat_path + "dqn.model", dqn.model)
+for i in xrange(3):
+    optim = optimizers.Adam()
+    optim.setup(dqn.models[i])
 
-if os.path.isfile(dat_path + "dqn.state"):
-    print >> sys.stderr, "::loading dqn.state..."
-    serializers.load_hdf5(dat_path + "dqn.state", optim)
+    if os.path.isfile(dat_path + "dqn" + str(i) + ".model"):
+        print >> sys.stderr, "::loading dqn.model..."
+        serializers.load_hdf5(dat_path + "dqn" + str(i) + ".model", dqn.models[i])
+
+    if os.path.isfile(dat_path + "dqn" + str(i) + ".state"):
+        print >> sys.stderr, "::loading dqn.state..."
+        serializers.load_hdf5(dat_path + "dqn" + str(i) + ".state", optim)
+
+    dqn.models[i] = dqn.models[i].to_gpu()
+    optims.append(optim)
 
 for epoch in xrange(100):
     print "Epoch: {}".format(epoch)
@@ -42,15 +48,31 @@ for epoch in xrange(100):
     trg_rules = []
     for batch in xrange(20):
         trg_rules.append(rules[trg_index[batch]])
-    optim.zero_grads()
-    loss = dqn.get_loss(trg_rules)
-    loss.backward()
-    optim.update()
-    print "\tloss : {}".format(math.log10(float(loss.data)))
+    for optim in optims:
+        optim.zero_grads()
+    loss0, loss1, loss2 = dqn.get_loss(trg_rules)
+    loss0.backward()
+    loss1.backward()
+    loss2.backward()
+    for optim in optims:
+        optim.update()
+    if loss0.data == 0:
+        print "\tloss0 : ZERO"
+    else:
+        print "\tloss0 : {}".format(math.log10(float(loss0.data)))
+    if loss1.data == 0:
+        print "\tloss1 : ZERO"
+    else:
+        print "\tloss1 : {}".format(math.log10(float(loss1.data)))
+    if loss2.data == 0:
+        print "\tloss2 : ZERO"
+    else:
+        print "\tloss2 : {}".format(math.log10(float(loss2.data)))
 
 if not os.path.isdir(dat_path):
     os.mkdir(dat_path)
 
-serializers.save_hdf5(dat_path + "dqn.model", dqn.model)
-serializers.save_hdf5(dat_path + "dqn.state", optim)
+for i in xrange(3):
+    serializers.save_hdf5(dat_path + "dqn" + str(i) + ".model", dqn.models[i].to_cpu())
+    serializers.save_hdf5(dat_path + "dqn" + str(i) + ".state", optims[i])
 
