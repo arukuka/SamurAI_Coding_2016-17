@@ -32,11 +32,11 @@ for i in xrange(3):
 
     if os.path.isfile(dat_path + "dqn" + str(i) + ".model"):
         print >> sys.stderr, "::loading dqn.model..."
-        serializers.load_hdf5(dat_path + "dqn" + str(i) + ".model", dqn.models[i])
+        serializers.load_npz(dat_path + "dqn" + str(i) + ".model", dqn.models[i])
 
     if os.path.isfile(dat_path + "dqn" + str(i) + ".state"):
         print >> sys.stderr, "::loading dqn.state..."
-        serializers.load_hdf5(dat_path + "dqn" + str(i) + ".state", optim)
+        serializers.load_npz(dat_path + "dqn" + str(i) + ".state", optim)
 
     dqn.models[i] = dqn.models[i].to_gpu()
     optims.append(optim)
@@ -72,6 +72,6 @@ if not os.path.isdir(dat_path):
     os.mkdir(dat_path)
 
 for i in xrange(3):
-    serializers.save_hdf5(dat_path + "dqn" + str(i) + ".model", dqn.models[i])
-    serializers.save_hdf5(dat_path + "dqn" + str(i) + ".state", optims[i])
+    serializers.save_npz(dat_path + "dqn" + str(i) + ".model", dqn.models[i])
+    serializers.save_npz(dat_path + "dqn" + str(i) + ".state", optims[i])
 

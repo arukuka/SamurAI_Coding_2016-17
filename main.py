@@ -21,7 +21,7 @@ dqn = DQN()
 for i in xrange(3):
     if os.path.isfile(dat_path + "dqn" + str(i) + ".model"):
         print >> sys.stderr, "::loading dqn" + str(i) + ".model..."
-        serializers.load_hdf5(dat_path + "dqn" + str(i) + ".model", dqn.models[i])
+        serializers.load_npz(dat_path + "dqn" + str(i) + ".model", dqn.models[i])
 
 side = input()
 print 0
