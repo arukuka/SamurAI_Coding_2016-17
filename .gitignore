@@ -103,6 +103,7 @@ protobuf-3.1.0.post1-py2.7-nspkg.pth
 protobuf-3.1.0.post1.dist-info/
 six-1.10.0.dist-info/
 six.py
+pkg_resources.py
 turn/
 temp/
 json/
