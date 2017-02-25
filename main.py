@@ -4,10 +4,13 @@ import numpy as np
 import sys
 import os
 import pickle
+import gc
 
 from chainer import serializers
 
 from dqn import DQN
+
+gc.disable()
 
 dat_path = os.path.join(os.path.dirname(__file__), 'dat/')
 
@@ -53,6 +56,8 @@ while True:
     write(p0, P0)
     write(p1, P1)
     write(p2, P2)
+    if turn % 6 >= 4:
+        gc.collect()
     sys.stdout.flush()
     s3 = s2.copy()
     s2 = s1.copy()
