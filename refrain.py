@@ -132,6 +132,7 @@ sys.stdout.flush()
 
 while True:
     turn = int(input())
+    count = 0
     for i in xrange(3):
         a = map(int, raw_input().split())
         for j in xrange(5):
@@ -144,6 +145,8 @@ while True:
         a = map(int, raw_input().split())
         for j in xrange(15):
             s0[i][j] = a[j]
+            if 3 <= s0[i][j] and s0[i][j] <= 5:
+                count = count + 1
     if s0[16][4] > 0:
         enemies[0] = copy.copy(HOME[(1 - side) * 3 + 0])
     if s0[16][9] > 0:
@@ -172,8 +175,9 @@ while True:
         enemies[2][0] + enemies[2][1] * 15
     ]
     print >> sys.stderr, "enemies: {}".format(enemies)
-    with open(turn_path + str(turn) + '.pickle', mode='wb') as f:
-        pickle.dump(kumi, f)
+    if count >= 6:
+        with open(turn_path + str(turn) + '.pickle', mode='wb') as f:
+            pickle.dump(kumi, f)
     action_str = " ".join(([str(acts['plays'][idx]['samurai'])] + map(str, actions.to_valid_actions(acts['plays'][idx]['actions']))) + ["0"])
     action = actions.get_action_idx(action_str)
     s3 = s2.copy()

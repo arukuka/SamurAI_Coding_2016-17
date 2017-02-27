@@ -18,7 +18,7 @@ for fn in files:
     with open(turn_path + fn, "rb") as f:
         r = pickle.load(f)
         rules.append(r)
-    # os.remove(turn_path + fn)   
+    os.remove(turn_path + fn)
 
 dat_path = os.path.join(os.path.dirname(__file__), 'dat/')
 
@@ -28,7 +28,7 @@ dqn = DQN()
 optims = []
 
 for i in xrange(3):
-    optim = optimizers.Adam()
+    optim = optimizers.Adam(alpha = 0.0001)
     optim.setup(dqn.models[i])
 
     if os.path.isfile(dat_path + "dqn" + str(i) + ".model"):
