@@ -44,9 +44,10 @@ for i in xrange(3):
 
 for epoch in xrange(100):
     print "Epoch: {}".format(epoch)
-    trg_index = np.random.permutation(len(rules))[:20]
+    num = min(len(rules), 20)
+    trg_index = np.random.permutation(len(rules))[:num]
     trg_rules = []
-    for batch in xrange(20):
+    for batch in xrange(num):
         trg_rules.append(rules[trg_index[batch]])
     for optim in optims:
         optim.zero_grads()
